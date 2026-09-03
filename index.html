@@ -300,18 +300,19 @@
         <div class="main">
 
           <div class="preview-bar">
-            <span class="preview-title" id="previewTitle">面板訂購工具</span>
-            <button class="open-btn" id="openBtn">Start</button>
+            <span class="preview-title" id="previewTitle">請選擇右側工具</span>
+            <button class="open-btn" id="openBtn" disabled>Start</button>
           </div>
           <div class="preview-frame" id="previewFrameWrap">
             <div class="preview-scale" id="previewScale">
-              <iframe id="previewFrame" src="https://panel-order-tool-phi.vercel.app/" tabindex="-1"></iframe>
+              <iframe id="previewFrame" src="about:blank" tabindex="-1"></iframe>
             </div>
+            <div class="preview-empty" id="previewEmpty">點選右側工具即可預覽</div>
           </div>
 
           <div class="tools">
 
-            <button class="card active" data-url="https://panel-order-tool-phi.vercel.app/" data-name="面板訂購工具" onclick="selectTool(this)">
+            <button class="card" data-url="https://panel-order-tool-phi.vercel.app/" data-name="面板訂購工具" onclick="selectTool(this)">
               <div class="card-top">
                 <svg class="icon" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="8" y="4" width="26" height="34" rx="2" stroke="#F3EEE3" stroke-width="1.5"/>
@@ -360,12 +361,11 @@
     const name = el.getAttribute('data-name');
     document.getElementById('previewFrame').src = url;
     document.getElementById('previewTitle').textContent = name;
-    document.getElementById('openBtn').onclick = () => window.open(url, '_blank', 'noopener');
+    document.getElementById('previewEmpty').style.display = 'none';
+    const openBtn = document.getElementById('openBtn');
+    openBtn.disabled = false;
+    openBtn.onclick = () => window.open(url, '_blank', 'noopener');
   }
-  document.getElementById('openBtn').onclick = () => {
-    const active = document.querySelector('.card.active');
-    window.open(active.getAttribute('data-url'), '_blank', 'noopener');
-  };
 </script>
 
 </body>
