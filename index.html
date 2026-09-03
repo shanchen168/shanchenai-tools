@@ -137,11 +137,21 @@
     position: relative;
   }
 
-  .preview-frame iframe {
-    width: 100%;
-    height: 100%;
+  .preview-scale {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1440px;
+    height: 900px;
+    transform-origin: top left;
+  }
+
+  .preview-scale iframe {
+    width: 1440px;
+    height: 900px;
     border: 0;
     display: block;
+    pointer-events: none;
   }
 
   .preview-empty {
@@ -289,8 +299,10 @@
             <span class="preview-title" id="previewTitle">面板訂購工具</span>
             <button class="open-btn" id="openBtn">Start</button>
           </div>
-          <div class="preview-frame">
-            <iframe id="previewFrame" src="https://panel-order-tool-phi.vercel.app/"></iframe>
+          <div class="preview-frame" id="previewFrameWrap">
+            <div class="preview-scale" id="previewScale">
+              <iframe id="previewFrame" src="https://panel-order-tool-phi.vercel.app/" tabindex="-1"></iframe>
+            </div>
           </div>
 
           <div class="tools">
@@ -326,6 +338,17 @@
   </div>
 
 <script>
+  const BASE_W = 1440;
+
+  function scalePreview() {
+    const wrap = document.getElementById('previewFrameWrap');
+    const scaleEl = document.getElementById('previewScale');
+    const factor = wrap.clientWidth / BASE_W;
+    scaleEl.style.transform = `scale(${factor})`;
+  }
+  window.addEventListener('resize', scalePreview);
+  scalePreview();
+
   function selectTool(el) {
     document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
     el.classList.add('active');
