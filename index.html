@@ -201,6 +201,30 @@
   .open-btn:hover { color: var(--gold); }
   .open-btn:disabled { opacity: 0.35; cursor: default; }
 
+  /* category tabs */
+  .tabs {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+  }
+  .tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 4px 2px;
+    color: var(--ink-soft);
+    font-family: 'Nunito', sans-serif;
+    font-size: clamp(12px, 1.05vw, 14px);
+    font-weight: 700;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.on { color: var(--ink); border-bottom-color: var(--gold); }
+  .tab:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
   /* right grid */
   .tools {
     grid-column: 2;
@@ -317,6 +341,7 @@
             <div class="preview-empty" id="previewEmpty">點選右側工具即可預覽</div>
           </div>
 
+          <div class="tabs" id="tabs" role="tablist"></div>
           <div class="tools" id="tools"></div>
 
         </div>
@@ -332,12 +357,14 @@
   /* ============================================================
      新增工具：複製下面任一行 { ... }，貼在「新工具貼在這一行上方」那行之上，
      再改 name / url / desc / icon 即可。
-     icon 可用：doc、shield、calc、chart、calendar、list、home、ruler
+     cat 是分類，目前有「工地」「廠商」；想加新分類，把名字加進下面的 CATEGORIES 即可。
+     icon 可用：doc、shield、calc、chart、calendar、list、home、ruler、box
      ============================================================ */
+  const CATEGORIES = ['工地', '廠商'];
   const TOOLS = [
-    { name: '面板訂購工具', url: 'https://panel-order-tool-phi.vercel.app/', desc: 'Panasonic水電面板依系列分組，統計品項製成訂購單。', icon: 'doc' },
-    { name: '保護材料計算工具', url: 'https://protection-material.vercel.app/', desc: '計算保護材料數量，並提供師傅包法圖文說明。', icon: 'shield' },
-    { name: '系統樣板庫存', url: 'https://sampleinventory.vercel.app/', desc: '管理板材樣板庫存，並可對照廠商官網核對。', icon: 'list' },
+    { name: '面板訂購工具', url: 'https://panel-order-tool-phi.vercel.app/', desc: 'Panasonic水電面板依系列分組，統計品項製成訂購單。', icon: 'doc', cat: '廠商' },
+    { name: '保護材料計算工具', url: 'https://protection-material.vercel.app/', desc: '計算保護材料數量，並提供師傅包法圖文說明。', icon: 'shield', cat: '工地' },
+    { name: '系統樣板庫存', url: 'https://sampleinventory.vercel.app/', desc: '管理板材樣板庫存，並可對照廠商官網核對。', icon: 'box', cat: '廠商' },
     // 新工具貼在這一行上方
   ];
 
@@ -349,6 +376,7 @@
     calendar: '<rect x="6" y="9" width="30" height="27" rx="2"/><line x1="6" y1="17" x2="36" y2="17"/><line x1="14" y1="5" x2="14" y2="12"/><line x1="28" y1="5" x2="28" y2="12"/><circle cx="14" cy="25" r="1.3" fill="currentColor"/><circle cx="21" cy="25" r="1.3" fill="currentColor"/><circle cx="28" cy="25" r="1.3" fill="currentColor"/>',
     list: '<rect x="8" y="5" width="26" height="32" rx="2"/><path d="M13 14 l2 2 l4 -4"/><line x1="23" y1="14" x2="29" y2="14"/><path d="M13 23 l2 2 l4 -4"/><line x1="23" y1="23" x2="29" y2="23"/><line x1="13" y1="31" x2="19" y2="31"/>',
     home: '<path d="M5 21 L21 7 L37 21" stroke-linejoin="round"/><path d="M10 18 V35 H32 V18" stroke-linejoin="round"/><rect x="18" y="25" width="6" height="10"/>',
+    box: '<path d="M21 5 L36 12 L21 19 L6 12 Z" stroke-linejoin="round"/><path d="M6 12 V29 L21 37 L36 29 V12" stroke-linejoin="round"/><line x1="21" y1="19" x2="21" y2="37"/><path d="M13.5 8.5 L28.5 15.5" />',
     ruler: '<rect x="4" y="15" width="34" height="12" rx="1.5"/><line x1="10" y1="15" x2="10" y2="21"/><line x1="16" y1="15" x2="16" y2="23"/><line x1="22" y1="15" x2="22" y2="21"/><line x1="28" y1="15" x2="28" y2="23"/><line x1="34" y1="15" x2="34" y2="21"/>'
   };
 
@@ -380,35 +408,65 @@
   }
 
   const box = document.getElementById('tools');
-  TOOLS.forEach(function (t) {
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = 'card tool';
+  const tabsEl = document.getElementById('tabs');
+  let currentCat = CATEGORIES[0];
 
-    const top = document.createElement('div');
-    top.className = 'card-top';
-    const wrap = document.createElement('div');
-    wrap.innerHTML = iconSvg(t.icon);
-    top.appendChild(wrap.firstChild);
-    const h2 = document.createElement('h2');
-    h2.textContent = t.name;
-    top.appendChild(h2);
-    card.appendChild(top);
+  function renderTools() {
+    box.innerHTML = '';
+    box.scrollTop = 0;
+    const list = TOOLS.filter(function (t) { return t.cat === currentCat; });
 
-    const p = document.createElement('p');
-    p.textContent = t.desc;
-    card.appendChild(p);
+    list.forEach(function (t) {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'card tool' + (t === selected ? ' active' : '');
 
-    card.addEventListener('click', function () { selectTool(t, card); });
-    box.appendChild(card);
-  });
+      const top = document.createElement('div');
+      top.className = 'card-top';
+      const wrap = document.createElement('div');
+      wrap.innerHTML = iconSvg(t.icon);
+      top.appendChild(wrap.firstChild);
+      const h2 = document.createElement('h2');
+      h2.textContent = t.name;
+      top.appendChild(h2);
+      card.appendChild(top);
 
-  const slots = Math.max(MIN_SLOTS, Math.ceil(TOOLS.length / 2) * 2);
-  for (let i = TOOLS.length; i < slots; i++) {
-    const d = document.createElement('div');
-    d.className = 'card placeholder';
-    box.appendChild(d);
+      const p = document.createElement('p');
+      p.textContent = t.desc;
+      card.appendChild(p);
+
+      card.addEventListener('click', function () { selectTool(t, card); });
+      box.appendChild(card);
+    });
+
+    const slots = Math.max(MIN_SLOTS, Math.ceil(list.length / 2) * 2);
+    for (let i = list.length; i < slots; i++) {
+      const d = document.createElement('div');
+      d.className = 'card placeholder';
+      box.appendChild(d);
+    }
   }
+
+  function renderTabs() {
+    tabsEl.innerHTML = '';
+    CATEGORIES.forEach(function (c) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tab' + (c === currentCat ? ' on' : '');
+      b.textContent = c;
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', c === currentCat ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        currentCat = c;
+        renderTabs();
+        renderTools();
+      });
+      tabsEl.appendChild(b);
+    });
+  }
+
+  renderTabs();
+  renderTools();
 </script>
 
 </body>
